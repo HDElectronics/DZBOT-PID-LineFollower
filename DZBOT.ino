@@ -6,6 +6,7 @@ SoftwareSerial mySerial(2, 3); //RX = 2 ; TX = 3
 bool valeurCapteur[3];
 
 //Variables pour le régulateur PID
+float err;
 float error = 0;
 float pre_error = 0;
 float Kp;
@@ -15,7 +16,7 @@ float resultPIDF;
 float sum_error = 0;
 int resultPID;
 int rightSpeed,leftSpeed;
-const int baseSpeed = 150;
+int baseSpeed = 150;
 const int maxSpeed = 255;
 int vd, vg;
 
@@ -47,9 +48,6 @@ pinMode(A2,INPUT);
 mySerial.begin(9600);
 
 //
-while (mySerial.available() == 0)
-mySerial.print("Welcome! Enter the values of KP, KI, KD recpectevly");mySerial.flush(); //attendre que le buffer de transimission se vide
-while (mySerial.available()) mySerial.read(); //attendre que le buffer de reception se vide
 //
 //
 while (mySerial.available() == 0)
@@ -65,6 +63,16 @@ while (mySerial.available()) mySerial.read();
 while (mySerial.available() == 0)
 Kd = mySerial.parseFloat();
 mySerial.print("Kd = ");mySerial.println(Kd);mySerial.flush();
+while (mySerial.available()) mySerial.read();
+//
+while (mySerial.available() == 0)
+err = mySerial.parseFloat();
+mySerial.print("err = ");mySerial.println(err);mySerial.flush();
+while (mySerial.available()) mySerial.read();
+//
+while (mySerial.available() == 0)
+baseSpeed = mySerial.parseInt();
+mySerial.print("baseSpeed = ");mySerial.println(baseSpeed);mySerial.flush();
 while (mySerial.available()) mySerial.read();
 //
 
@@ -153,13 +161,13 @@ void suiveur() {
     error = 1;
   }
   else if (valeurCapteur[0] == 0 && valeurCapteur[1] == 0 && valeurCapteur[2] == 1 ) {
-    error = 2;
+    error = err;
   }
   else if (valeurCapteur[0] == 1 && valeurCapteur[1] == 1 && valeurCapteur[2] == 0 ) {
     error = -1;
   }
   else if (valeurCapteur[0] == 1 && valeurCapteur[1] == 0 && valeurCapteur[2] == 0 ) {
-    error = -2;
+    error = -err;
   }
   else if (valeurCapteur[0] == 1 && valeurCapteur[1] == 1 && valeurCapteur[2] == 1 ) {
     error = 0;
@@ -178,8 +186,6 @@ void suiveur() {
   if (leftSpeed < -maxSpeed) leftSpeed = -maxSpeed;
   if (rightSpeed < -maxSpeed) rightSpeed = -maxSpeed;
   ////////////////////////////////////////////////////////////////////
-  mySerial.print("leftSpeed:  ");mySerial.println(leftSpeed);
-  mySerial.print("rightSpeed: ");mySerial.println(rightSpeed);
   moteur(rightSpeed, leftSpeed);
   
   pre_error = error;
